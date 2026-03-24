@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="DayLog">
+<meta name="theme-color" content="#7c5cfc">
+<title>DayLog</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f4f0;--bg2:#ffffff;--surface:#ffffff;--surface2:#f9f8f6;
+  --border:#e8e5df;--border2:#d8d4cc;
+  --purple:#7c5cfc;--purple-light:#ede9ff;--purple-mid:rgba(124,92,252,.12);
+  --green:#00c875;--green-light:#e3faf0;
+  --amber:#ffb800;--amber-light:#fff8e0;
+  --coral:#ff6b6b;--coral-light:#fff0f0;
+  --text:#1a1a2e;--text-mid:#6b7080;--text-faint:#b0b5bf;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.06);--shadow-md:0 4px 20px rgba(0,0,0,.09);--shadow-lg:0 8px 40px rgba(0,0,0,.12);
+  --radius:14px;--radius-sm:8px;--radius-xs:6px;
+  --font:'DM Sans',sans-serif;--font2:'Inter',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:14px;}
+
+/* HEADER */
+header{display:flex;align-items:center;padding:0 28px;height:58px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;gap:18px;box-shadow:var(--shadow-sm);z-index:10;}
+.logo{font-weight:700;font-size:18px;letter-spacing:-.3px;color:var(--purple);display:flex;align-items:center;gap:8px;}
+.logo-dot{width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 0 3px rgba(0,200,117,.2);animation:breathe 2.5s ease-in-out infinite;}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 3px rgba(0,200,117,.2);}50%{box-shadow:0 0 0 6px rgba(0,200,117,.08);}}
+.header-sep{width:1px;height:22px;background:var(--border);flex-shrink:0;}
+.header-datetime{font-family:var(--font2);font-size:12px;color:var(--text-mid);font-weight:500;}
+.header-right{margin-left:auto;display:flex;gap:10px;align-items:center;}
+.ai-badge{font-family:var(--font2);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.5px;}
+.ai-badge.on{background:var(--green-light);color:var(--green);border:1px solid rgba(0,200,117,.25);}
+.ai-badge.off{background:var(--amber-light);color:var(--amber);border:1px solid rgba(255,184,0,.25);}
+.btn-hdr{background:var(--purple);border:none;color:#fff;font-family:var(--font);font-size:13px;font-weight:600;padding:8px 18px;cursor:pointer;border-radius:20px;transition:all .2s;box-shadow:0 2px 10px rgba(124,92,252,.3);}
+.btn-hdr:hover{background:#6a4aee;box-shadow:0 4px 16px rgba(124,92,252,.4);transform:translateY(-1px);}
+.btn-hdr.ghost{background:none;border:1.5px solid var(--border);color:var(--text-mid);box-shadow:none;}
+.btn-hdr.ghost:hover{border-color:var(--purple);color:var(--purple);background:var(--purple-light);transform:none;}
+
+/* MAIN */
+main{display:flex;flex:1;overflow:hidden;}
+
+/* TASKS PANEL */
+#tasks-panel{width:310px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;background:var(--bg2);overflow:hidden;}
+.panel-top{padding:20px 20px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);}
+.panel-title{font-size:11px;letter-spacing:1.5px;color:var(--text-faint);font-weight:600;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.panel-date-badge{background:var(--purple-light);color:var(--purple);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.5px;text-transform:none;}
+.ring-wrap{display:flex;align-items:center;gap:16px;background:var(--bg);border-radius:var(--radius);padding:14px 16px;}
+.ring-svg{width:56px;height:56px;flex-shrink:0;}
+.ring-bg{fill:none;stroke:var(--border);stroke-width:4;}
+.ring-fill{fill:none;stroke:var(--purple);stroke-width:4;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .7s cubic-bezier(.4,0,.2,1);}
+.ring-pct{fill:var(--text);font-size:13px;font-weight:700;font-family:'Inter',sans-serif;text-anchor:middle;dominant-baseline:middle;}
+.ring-label{fill:var(--text-faint);font-size:7px;letter-spacing:1px;font-family:'Inter',sans-serif;text-anchor:middle;dominant-baseline:middle;}
+.ring-stats{font-family:var(--font2);font-size:12px;color:var(--text-mid);line-height:2;}
+.ring-stats b{color:var(--text);font-weight:600;}
+#tasks-list{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:4px;}
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;cursor:pointer;position:relative;transition:all .18s;border-radius:var(--radius-sm);border:1.5px solid transparent;background:transparent;}
+.task-item:hover{background:var(--surface2);border-color:var(--border);}
+.task-item.done{background:var(--green-light);border-color:rgba(0,200,117,.15);}
+.task-item.done:hover{background:#d8f7ec;}
+.task-check-outer{width:18px;height:18px;border:2px solid var(--border2);border-radius:50%;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s;background:#fff;}
+.task-item:hover:not(.done) .task-check-outer{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-mid);}
+.task-item.done .task-check-outer{border-color:var(--green);background:var(--green);}
+.task-check-icon{font-size:9px;color:#fff;opacity:0;transition:opacity .2s;line-height:1;}
+.task-item.done .task-check-icon{opacity:1;}
+.task-body{flex:1;min-width:0;}
+.task-text{font-size:13px;font-weight:500;color:var(--text);line-height:1.45;transition:color .2s;word-break:break-word;}
+.task-item.done .task-text{color:var(--text-faint);text-decoration:line-through;text-decoration-color:rgba(0,200,117,.5);}
+.task-meta{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.task-time{font-family:var(--font2);font-size:10px;color:var(--text-faint);}
+.task-status{font-size:9px;letter-spacing:.8px;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;}
+.task-status.pending{background:var(--amber-light);color:var(--amber);}
+.task-status.done-badge{background:var(--green-light);color:var(--green);}
+.task-del{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:14px;opacity:0;transition:all .15s;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.task-item:hover .task-del{opacity:1;}
+.task-del:hover{background:var(--coral-light);color:var(--coral)!important;}
+.task-hint{position:absolute;bottom:4px;left:42px;font-size:9px;color:var(--purple);opacity:0;letter-spacing:.3px;transition:opacity .15s;font-family:var(--font2);font-weight:500;}
+.task-item:hover:not(.done) .task-hint{opacity:.7;}
+.empty-state{padding:32px 16px;text-align:center;font-size:13px;color:var(--text-faint);line-height:1.8;}
+.empty-state div{margin-bottom:10px;font-size:30px;}
+
+/* CHAT PANEL */
+#chat-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+#chat-messages{flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:14px;}
+.msg{max-width:78%;animation:msgIn .22s cubic-bezier(.4,0,.2,1);}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.msg.user{align-self:flex-end;}
+.msg.assistant{align-self:flex-start;}
+.msg-bubble{padding:12px 18px;line-height:1.7;font-size:14px;font-weight:400;box-shadow:var(--shadow-sm);}
+.msg.user .msg-bubble{background:var(--purple);color:#fff;border-radius:18px 18px 4px 18px;}
+.msg.assistant .msg-bubble{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:18px 18px 18px 4px;}
+.msg.report .msg-bubble{max-width:700px;white-space:pre-wrap;font-family:var(--font2);font-size:12.5px;line-height:1.85;border-radius:var(--radius);background:var(--bg2);}
+.msg-time{font-family:var(--font2);font-size:10px;color:var(--text-faint);margin-top:5px;padding:0 4px;}
+.msg.user .msg-time{text-align:right;}
+
+/* TYPING INDICATOR */
+.typing-dots{display:flex;gap:4px;padding:4px 0;}
+.typing-dots span{width:7px;height:7px;background:var(--text-faint);border-radius:50%;animation:tdot 1.4s infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s;}
+.typing-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes tdot{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-5px);opacity:1;}}
+
+/* CHIPS */
+#chips{display:flex;gap:8px;padding:12px 22px 4px;flex-wrap:wrap;flex-shrink:0;}
+.chip{background:var(--bg2);border:1.5px solid var(--border);color:var(--text-mid);font-family:var(--font);font-size:12px;font-weight:600;letter-spacing:.2px;padding:6px 14px;cursor:pointer;border-radius:20px;transition:all .18s;box-shadow:var(--shadow-sm);}
+.chip:hover{border-color:var(--purple);color:var(--purple);background:var(--purple-light);transform:translateY(-1px);box-shadow:0 4px 12px rgba(124,92,252,.15);}
+
+/* INPUT */
+#input-area{padding:14px 22px 18px;display:flex;gap:10px;align-items:flex-end;flex-shrink:0;background:var(--bg2);border-top:1px solid var(--border);}
+#chat-input{flex:1;background:var(--bg);border:1.5px solid var(--border);color:var(--text);font-family:var(--font);font-size:14px;font-weight:400;padding:11px 16px;resize:none;outline:none;line-height:1.5;max-height:120px;border-radius:24px;transition:all .2s;}
+#chat-input:focus{border-color:var(--purple);background:#fff;box-shadow:0 0 0 3px var(--purple-mid);}
+#chat-input::placeholder{color:var(--text-faint);}
+#send-btn{background:var(--purple);border:none;color:#fff;font-size:18px;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:50%;transition:all .2s;box-shadow:0 3px 12px rgba(124,92,252,.35);line-height:1;}
+#send-btn:hover{background:#6a4aee;transform:scale(1.07);box-shadow:0 5px 18px rgba(124,92,252,.45);}
+#send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* MODAL BASE */
+.modal-overlay{position:fixed;inset:0;background:rgba(20,20,40,.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(12px);}
+.modal-overlay.hidden{display:none;}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;width:660px;max-height:82vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);overflow:hidden;}
+.modal-header{display:flex;align-items:center;padding:20px 24px 16px;border-bottom:1px solid var(--border);}
+.modal-header h2{font-size:17px;font-weight:700;color:var(--text);flex:1;letter-spacing:-.3px;}
+.modal-close{background:var(--bg);border:1.5px solid var(--border);color:var(--text-mid);cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;}
+.modal-close:hover{border-color:var(--coral);color:var(--coral);background:var(--coral-light);}
+.modal-tabs{display:flex;gap:6px;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--bg);}
+.modal-tab{flex:1;padding:10px;background:transparent;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text-mid);font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:all .18s;text-transform:uppercase;}
+.modal-tab.active{color:var(--purple);background:var(--purple-light);border-color:rgba(124,92,252,.3);}
+.modal-tab:hover:not(.active){color:var(--text);background:var(--bg2);}
+.modal-body{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:14px;}
+.report-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.report-controls input[type="date"]{background:var(--bg);border:1.5px solid var(--border);color:var(--text);font-family:var(--font2);font-size:12px;padding:9px 14px;outline:none;cursor:pointer;border-radius:var(--radius-sm);transition:border-color .15s;}
+.report-controls input[type="date"]:focus{border-color:var(--purple);}
+.btn-gen{background:var(--purple);border:none;color:#fff;font-family:var(--font);font-size:12px;font-weight:700;padding:10px 20px;cursor:pointer;letter-spacing:.3px;border-radius:var(--radius-sm);transition:all .18s;box-shadow:0 2px 10px rgba(124,92,252,.3);}
+.btn-gen:hover{background:#6a4aee;transform:translateY(-1px);}
+.btn-copy{background:var(--bg);border:1.5px solid var(--border);color:var(--text-mid);font-family:var(--font);font-size:12px;font-weight:600;padding:9px 18px;cursor:pointer;border-radius:var(--radius-sm);transition:all .15s;margin-left:auto;}
+.btn-copy:hover{border-color:var(--purple);color:var(--purple);}
+#report-output{flex:1;white-space:pre-wrap;font-family:var(--font2);font-size:12px;line-height:1.9;color:var(--text);background:var(--bg);border:1.5px solid var(--border);padding:18px;min-height:200px;border-radius:var(--radius-sm);}
+
+/* API KEY MODAL */
+#apikey-modal .modal-box{width:460px;max-height:none;}
+.apikey-body{padding:24px;}
+.apikey-body p{font-size:13px;color:var(--text-mid);line-height:1.7;margin-bottom:18px;}
+.apikey-body a{color:var(--purple);text-decoration:none;font-weight:600;}
+.apikey-body a:hover{text-decoration:underline;}
+.apikey-input-row{display:flex;gap:10px;margin-bottom:12px;}
+#apikey-input{flex:1;background:var(--bg);border:1.5px solid var(--border);color:var(--text);font-family:var(--font2);font-size:13px;padding:10px 14px;outline:none;border-radius:var(--radius-sm);transition:border-color .2s;}
+#apikey-input:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-mid);}
+.btn-save-key{background:var(--purple);border:none;color:#fff;font-family:var(--font);font-size:13px;font-weight:700;padding:10px 20px;cursor:pointer;border-radius:var(--radius-sm);white-space:nowrap;transition:all .18s;}
+.btn-save-key:hover{background:#6a4aee;}
+.btn-skip-key{background:none;border:none;color:var(--text-faint);font-family:var(--font);font-size:12px;cursor:pointer;text-decoration:underline;margin-top:4px;}
+.btn-skip-key:hover{color:var(--text-mid);}
+.apikey-note{font-size:11px;color:var(--text-faint);line-height:1.6;margin-top:6px;}
+
+.hidden{display:none!important;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text-faint);}
+
+/* ═══════════════════════════════════════
+   MOBILE RESPONSIVE
+═══════════════════════════════════════ */
+@media (max-width: 768px) {
+  body { font-size:15px; }
+
+  header {
+    padding: 0 16px;
+    height: 52px;
+    gap: 10px;
+  }
+
+  .logo { font-size: 16px; }
+  .header-sep { display: none; }
+  .header-datetime { display: none; }
+  .ai-badge { display: none; }
+  .btn-hdr { font-size: 12px; padding: 6px 12px; }
+  #btn-key { display: none; }
+
+  main {
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* TASKS PANEL — collapsed strip at top on mobile */
+  #tasks-panel {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    max-height: 200px;
+  }
+
+  .panel-top { padding: 12px 16px 10px; }
+
+  .panel-title { margin-bottom: 10px; font-size: 10px; }
+
+  .ring-wrap { padding: 10px 12px; gap: 12px; border-radius: 10px; }
+  .ring-svg  { width: 46px; height: 46px; }
+  .ring-stats { font-size: 11px; line-height: 1.7; }
+
+  #tasks-list {
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex:none;
+    max-height: none;
+  }
+
+  /* Horizontal scrollable task cards on mobile */
+  .task-item {
+    min-width: 160px;
+    max-width: 200px;
+    flex-shrink: 0;
+    flex-direction: column;
+    gap: 5px;
+    padding: 9px 11px;
+    border-radius: 10px;
+  }
+
+  .task-check-outer { display: none; }
+  .task-hint { display: none; }
+  .task-del { opacity: 1; top: 6px; right: 6px; transform: none; width: 20px; height: 20px; font-size: 11px; }
+  .task-time { font-size: 9px; }
+
+  .empty-state { padding: 16px; font-size: 12px; }
+  .empty-state div { font-size: 20px; margin-bottom: 4px; }
+
+  /* CHAT PANEL — takes remaining space */
+  #chat-panel { flex: 1; min-height: 0; }
+
+  #chat-messages { padding: 16px 16px; gap: 12px; }
+
+  .msg { max-width: 90%; }
+  .msg-bubble { font-size: 14px; padding: 11px 15px; }
+  .msg.report .msg-bubble { font-size: 12px; }
+
+  #chips {
+    padding: 8px 14px 4px;
+    gap: 6px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  #chips::-webkit-scrollbar { display: none; }
+
+  .chip {
+    font-size: 11px;
+    padding: 5px 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  #input-area {
+    padding: 10px 14px 14px;
+    gap: 8px;
+  }
+
+  #chat-input {
+    font-size: 15px;
+    padding: 10px 15px;
+    border-radius: 22px;
+  }
+
+  #send-btn { width: 42px; height: 42px; font-size: 17px; }
+
+  /* MODALS full-screen on mobile */
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-box {
+    width: 100%;
+    max-height: 90vh;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+  }
+
+  #apikey-modal .modal-box { max-height: none; border-radius: 20px 20px 0 0; }
+
+  .apikey-input-row { flex-direction: column; }
+  .btn-save-key { width: 100%; padding: 12px; }
+}
+
+@media (max-width: 400px) {
+  #tasks-panel { max-height: 180px; }
+  .ring-wrap { padding: 8px 10px; }
+  .ring-svg { width: 40px; height: 40px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-dot"></div>DayLog</div>
+  <div class="header-sep"></div>
+  <div class="header-datetime" id="dt">—</div>
+  <div class="header-right">
+    <span class="ai-badge off" id="ai-badge">AI OFF</span>
+    <button class="btn-hdr ghost" onclick="openApiKeyModal()" id="btn-key" title="Configure AI">⚙ AI Setup</button>
+    <button class="btn-hdr" onclick="openReports()">↗ Reports</button>
+  </div>
+</header>
+
+<main>
+  <aside id="tasks-panel">
+    <div class="panel-top">
+      <div class="panel-title">Today's Tasks <span class="panel-date-badge" id="panel-date">—</span></div>
+      <div class="ring-wrap">
+        <svg class="ring-svg" viewBox="0 0 52 52">
+          <circle class="ring-bg" cx="26" cy="26" r="22"/>
+          <circle class="ring-fill" id="ring-fill" cx="26" cy="26" r="22" stroke-dasharray="138.2" stroke-dashoffset="138.2"/>
+          <text x="26" y="24"><tspan class="ring-pct" id="ring-pct" x="26">0%</tspan></text>
+          <text x="26" y="36"><tspan class="ring-label" x="26">DONE</tspan></text>
+        </svg>
+        <div class="ring-stats" id="ring-stats"><div><b>0</b> completed</div><div><b>0</b> pending</div></div>
+      </div>
+    </div>
+    <div id="tasks-list"></div>
+  </aside>
+
+  <section id="chat-panel">
+    <div id="chat-messages"></div>
+    <div id="chips">
+      <button class="chip" onclick="quickCmd('what\\'s pending')">📋 Pending</button>
+      <button class="chip" onclick="quickCmd('daily report')">📄 Daily Report</button>
+      <button class="chip" onclick="quickCmd('weekly report')">📊 Weekly</button>
+      <button class="chip" onclick="quickCmd('status')">⚡ Status</button>
+      <button class="chip" onclick="quickCmd('clear today')">🗑 Clear Today</button>
+    </div>
+    <div id="input-area">
+      <textarea id="chat-input" rows="1" placeholder="Tell me what you're working on today, or dump your whole task list…"></textarea>
+      <button id="send-btn" onclick="handleSend()">↑</button>
+    </div>
+  </section>
+</main>
+
+<!-- REPORTS MODAL -->
+<div id="reports-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Reports</h2>
+      <button class="modal-close" onclick="closeReports()">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-daily" onclick="switchTab('daily')">Daily</button>
+      <button class="modal-tab" id="tab-weekly" onclick="switchTab('weekly')">Weekly</button>
+    </div>
+    <div class="modal-body">
+      <div id="daily-controls" class="report-controls">
+        <input type="date" id="daily-date">
+        <button class="btn-gen" onclick="genReport('daily')">Generate</button>
+        <button class="btn-copy" onclick="copyReport()">Copy</button>
+      </div>
+      <div id="weekly-controls" class="report-controls hidden">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <input type="date" id="week-start" onchange="updateWeekLabel()">
+          <span style="color:var(--text-faint);font-size:13px;">→</span>
+          <input type="date" id="week-end" onchange="updateWeekLabel()">
+        </div>
+        <div id="week-label" style="width:100%;font-size:11px;color:var(--text-mid);font-family:var(--font2);margin-top:-6px;"></div>
+        <button class="btn-gen" onclick="genReport('weekly')">Generate</button>
+        <button class="btn-copy" onclick="copyReport()">Copy</button>
+      </div>
+      <div id="report-output">Select a date and click Generate.</div>
+    </div>
+  </div>
+</div>
+
+<!-- API KEY MODAL -->
+<div id="apikey-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>AI Setup</h2>
+      <button class="modal-close" onclick="closeApiKeyModal()">✕</button>
+    </div>
+    <div class="apikey-body">
+      <p>DayLog uses the <strong>Claude API</strong> for intelligent task understanding, natural language reports, and context-aware responses — just like you had with ChatGPT, but with timestamps built in.</p>
+      <p>If you're using this inside <strong>claude.ai</strong>, AI is already active — no key needed. If you downloaded this file, enter your Anthropic API key below.</p>
+      <p>Get your key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys.</p>
+      <div class="apikey-input-row">
+        <input type="password" id="apikey-input" placeholder="sk-ant-api03-…" autocomplete="off">
+        <button class="btn-save-key" onclick="saveApiKey()">Save & Enable AI</button>
+      </div>
+      <div class="apikey-note">Your key is stored only in this browser's localStorage. It's never sent anywhere except directly to Anthropic's API.</div>
+      <br>
+      <button class="btn-skip-key" onclick="closeApiKeyModal()">Skip — use offline mode</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════════════════════
+const DKEY='daylog:v2', AKEY='daylog:apikey';
+let D={days:{}};
+
+async function load(){
+  try{const r=await window.storage.get(DKEY);if(r){D=JSON.parse(r.value);return;}}catch{}
+  try{const s=localStorage.getItem(DKEY);if(s){D=JSON.parse(s);return;}}catch{}
+}
+async function save(){
+  const s=JSON.stringify(D);
+  try{await window.storage.set(DKEY,s);}catch{}
+  try{localStorage.setItem(DKEY,s);}catch{}
+}
+function getStoredKey(){try{return localStorage.getItem(AKEY)||'';}catch{return '';}}
+function storeKey(k){try{localStorage.setItem(AKEY,k);}catch{}}
+
+// ═══════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════
+const todayKey=()=>new Date().toISOString().split('T')[0];
+const nowISO=()=>new Date().toISOString();
+const ft=iso=>new Date(iso).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+const fd=key=>new Date(key+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const fdShort=key=>new Date(key+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+const uid=()=>'T'+Date.now()+Math.random().toString(36).slice(2,5);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function ensureDay(k){if(!D.days[k])D.days[k]={tasks:[],notes:[]};return D.days[k];}
+
+// ═══════════════════════════════════════════════════════
+//  DATA OPS
+// ═══════════════════════════════════════════════════════
+function addTask(dk,txt){const d=ensureDay(dk);const t={id:uid(),text:txt.trim(),status:'pending',added_at:nowISO(),completed_at:null};d.tasks.push(t);return t;}
+function doneTask(dk,id){const d=D.days[dk];if(!d)return;const t=d.tasks.find(t=>t.id===id);if(t&&t.status!=='done'){t.status='done';t.completed_at=nowISO();}}
+function removeTask(dk,id){const d=D.days[dk];if(!d)return;d.tasks=d.tasks.filter(t=>t.id!==id);}
+function addNote(dk,txt){ensureDay(dk).notes.push({time:nowISO(),text:txt.trim()});}
+
+// ═══════════════════════════════════════════════════════
+//  CONVERSATION HISTORY (session only)
+// ═══════════════════════════════════════════════════════
+let chatHistory=[];
+
+function buildSystemPrompt(){
+  const dk=todayKey();
+  const now=new Date().toLocaleString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const day=D.days[dk]||{tasks:[],notes:[]};
+  const taskList=day.tasks.length
+    ? day.tasks.map(t=>`  [${t.id}] [${t.status.toUpperCase()}] ${t.text}${t.completed_at?' (done '+ft(t.completed_at)+')':' (added '+ft(t.added_at)+')'}`).join('\n')
+    : '  (no tasks yet)';
+  const noteList=day.notes.length
+    ? day.notes.map(n=>`  [${ft(n.time)}] ${n.text}`).join('\n')
+    : '  (none)';
+
+  return `You are DayLog, an intelligent personal productivity assistant embedded in a task tracking app. Today is ${now}.
+
+CURRENT TASK LIST:
+${taskList}
+
+ACTIVITY LOG (notes logged today):
+${noteList}
+
+YOUR CAPABILITIES — you respond with a JSON object with this exact structure:
+{
+  "message": "your conversational reply (supports \\n for line breaks)",
+  "actions": [],
+  "report": null
+}
+
+Available actions (array of objects):
+- {"type":"add_task","text":"task description"} — add a new task
+- {"type":"complete_task","id":"EXACT_ID_FROM_LIST"} — mark task done (use exact ID from task list above)
+- {"type":"remove_task","id":"EXACT_ID_FROM_LIST"} — delete a task
+- {"type":"add_note","text":"..."} — log an activity note
+- {"type":"clear_today"} — wipe all tasks for today
+
+When to use "report" field: set it to a full report text string (not null) ONLY when the user explicitly asks for a daily or weekly report. Otherwise keep it null.
+
+BEHAVIOR RULES:
+1. LANGUAGE: Detect the user's language and respond in the SAME language. If they write in Romanian, respond in Romanian. If English, respond in English.
+2. TASK DUMPS: When the user dumps a list of tasks (e.g. "azi trebuie sa fac: - task1 - task2"), extract each item and add them all as separate tasks. Confirm with a brief structured summary.
+3. COMPLETION UPDATES: When user says they completed something (e.g. "am trimis oferta", "done with the proposal"), fuzzy match it to a pending task and mark it done. Confirm what you matched.
+4. STRUCTURED REPORTS: When asked for a daily report, generate a professional, well-organized report that:
+   - Groups tasks into categories (Quick Wins, Medium-Term, Pending/Blocked, etc.) based on their nature
+   - Summarizes what was accomplished vs what's still open
+   - Adds a brief "Focus of the day" or key insight at the bottom
+   - Uses the actual timestamps from the task data
+   - Matches the tone and language of how the user has been communicating
+5. WEEKLY REPORTS: Synthesize all days into a coherent weekly narrative with totals.
+6. REMINDERS: If asked what's pending, list them clearly and suggest priorities.
+7. CONVERSATIONAL: For chitchat or unclear input, respond naturally and helpfully without adding tasks.
+8. NEVER make up task IDs — only use IDs that appear in the task list above.
+9. Return ONLY valid JSON. No markdown, no code fences, no extra text before or after the JSON.`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  AI — CLAUDE API
+// ═══════════════════════════════════════════════════════
+let aiMode='unknown'; // 'artifact' | 'key' | 'offline'
+
+async function detectAiMode(){
+  // Try artifact mode (no key, works inside claude.ai)
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:10,messages:[{role:'user',content:'hi'}]})
+    });
+    if(r.status!==401&&r.status!==403){aiMode='artifact';updateAiBadge();return;}
+  }catch{}
+  // Try with stored key
+  const k=getStoredKey();
+  if(k){
+    const ok=await testKey(k);
+    if(ok){aiMode='key';updateAiBadge();return;}
+  }
+  aiMode='offline';updateAiBadge();
+}
+
+async function testKey(k){
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:10,messages:[{role:'user',content:'hi'}]})
+    });
+    return r.status!==401&&r.status!==403;
+  }catch{return false;}
+}
+
+function updateAiBadge(){
+  const badge=document.getElementById('ai-badge');
+  const btnKey=document.getElementById('btn-key');
+  const chipSetup=document.getElementById('chip-ai-setup');
+  const isMobile=window.innerWidth<=768;
+  if(aiMode==='artifact'||aiMode==='key'){
+    badge.textContent='✦ AI Active';badge.className='ai-badge on';
+    btnKey.textContent='⚙ AI';
+    if(chipSetup)chipSetup.style.display='none';
+  }else{
+    badge.textContent='AI Offline';badge.className='ai-badge off';
+    btnKey.textContent='⚙ AI Setup';
+    if(chipSetup)chipSetup.style.display=isMobile?'inline-flex':'none';
+  }
+}
+
+async function callAI(userMsg){
+  const headers={'Content-Type':'application/json'};
+  if(aiMode==='key'){
+    const k=getStoredKey();
+    headers['x-api-key']=k;
+    headers['anthropic-version']='2023-06-01';
+    headers['anthropic-dangerous-direct-browser-access']='true';
+  }
+
+  chatHistory.push({role:'user',content:userMsg});
+
+  const body={
+    model:'claude-sonnet-4-20250514',
+    max_tokens:1500,
+    system:buildSystemPrompt(),
+    messages:chatHistory.slice(-20) // keep last 20 turns
+  };
+
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers,body:JSON.stringify(body)});
+  if(!r.ok) throw new Error('API '+r.status);
+
+  const data=await r.json();
+  const raw=data.content.map(b=>b.text||'').join('').trim();
+
+  let parsed;
+  try{parsed=JSON.parse(raw.replace(/^```json\s*|^```\s*|```\s*$/gm,'').trim());}
+  catch{parsed={message:raw,actions:[],report:null};}
+
+  chatHistory.push({role:'assistant',content:raw});
+
+  // trim history to avoid bloat
+  if(chatHistory.length>40)chatHistory=chatHistory.slice(-30);
+
+  return parsed;
+}
+
+// ═══════════════════════════════════════════════════════
+//  OFFLINE FALLBACK PARSER
+// ═══════════════════════════════════════════════════════
+function fuzzy(q,tasks){
+  const ql=q.toLowerCase();let best=null,score=0;
+  for(const t of tasks){
+    const tl=t.text.toLowerCase();let s=0;
+    for(const w of tl.split(/\s+/))if(w.length>2&&ql.includes(w))s+=w.length;
+    for(const w of ql.split(/\s+/))if(w.length>3&&tl.includes(w))s+=w.length;
+    if(s>score){score=s;best=t;}
+  }
+  return score>=4?best:null;
+}
+
+function parseOffline(raw){
+  const msg=raw.trim(),lo=msg.toLowerCase();
+  const dk=todayKey(),day=D.days[dk]||{tasks:[],notes:[]};
+  const pend=day.tasks.filter(t=>t.status==='pending');
+  const done=day.tasks.filter(t=>t.status==='done');
+
+  if(/\b(daily[\s_]?report|raport\s*zilnic|report[\s_]?for|today.?s[\s_]?report)\b/i.test(lo))
+    return{message:'',actions:[],report:buildDailyFallback(todayKey())};
+  if(/\b(weekly[\s_]?report|raport\s*sapt|week.?s?\s*(report|summary))\b/i.test(lo))
+    return{message:'',actions:[],report:buildWeeklyFallback(last7())};
+  if(/\b(what.?s\s+(still\s+)?(pending|left)|pending|remind|ce\s+(mai\s+)?am\s+de\s+f[aă]cut)\b/i.test(lo)){
+    if(!pend.length)return{message:done.length?`All ${done.length} done. Nothing pending.`:'No tasks yet.',actions:[],report:null};
+    return{message:`${pend.length} pending:\n${pend.map((t,i)=>`${i+1}. ${t.text}`).join('\n')}`,actions:[],report:null};
+  }
+  const dRx=[/^(?:done|finished?|completed?|am\s+terminat|am\s+f[aă]cut|gata\s+cu)[:\s]+(.+)/i,/^(?:just\s+)?(?:finished?|completed?|done\s+with)\s+(.+)/i,/^(.+)\s+(?:is\s+)?(?:done|finished?|gata)\.?$/i];
+  for(const rx of dRx){const m=msg.match(rx);if(!m)continue;const q=(m[1]||'').trim();if(q.length<2)continue;const match=fuzzy(q,pend);if(match)return{message:`✓ Done: "${match.text}"`,actions:[{type:'complete_task',id:match.id},{type:'add_note',text:`Completed: ${match.text}`}],report:null};if(pend.length)return{message:`Couldn't match. Pending:\n${pend.map((t,i)=>`${i+1}. ${t.text}`).join('\n')}`,actions:[],report:null};}
+  if(/\b(clear\s+(today|all|everything)|sterge\s+tot|reset)\b/i.test(lo)){if(!day.tasks.length)return{message:'Nothing to clear.',actions:[],report:null};return{message:`Cleared ${day.tasks.length} tasks.`,actions:[{type:'clear_today'}],report:null};}
+  if(/\b(remove|delete|sterge|elimina)\b/i.test(lo)){const q=lo.replace(/\b(remove|delete|sterge|elimina)\b/gi,'').trim();const match=fuzzy(q,day.tasks);if(match)return{message:`Removed: "${match.text}"`,actions:[{type:'remove_task',id:match.id}],report:null};return{message:"No match found.",actions:[],report:null};}
+  const aRx=/^(?:add|task[:\s]|todo[:\s]|adauga|trebuie\s+sa|am\s+de)[:\s]+(.+)/i;const am=msg.match(aRx);if(am)return{message:`Added: "${am[1].trim()}"`,actions:[{type:'add_task',text:am[1].trim()}],report:null};
+  const taskVerbs=/^(call|email|send|write|review|check|fix|build|create|schedule|book|plan|buy|pay|submit|test|deploy|contact|meet|finish|start|suna|trimite|verifica|rezerva|scrie|plateste|contacteaza|intra\s+in\s+legatura)\b/i;
+  const isConvo=/^(you|i\s+(didn|don)|that|this|just\s|lol|ok|okay|thanks|nice|cool|wow|so\s|well\s|hm|nope|yes|no\s|omg)/i.test(lo);
+  const isQ=/\?$/.test(msg)||/^(what|when|where|who|why|how|is|are|do|did|can|could|should|would)\b/i.test(msg);
+  if(!isQ&&!isConvo&&taskVerbs.test(msg))return{message:`Added: "${msg}"`,actions:[{type:'add_task',text:msg}],report:null};
+  return{message:`⚠ AI is offline. Use "add [task]" to log tasks, or set up your API key via ⚙ AI Setup.`,actions:[],report:null};
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXECUTE ACTIONS
+// ═══════════════════════════════════════════════════════
+async function execActions(actions){
+  const dk=todayKey();
+  for(const a of actions||[]){
+    if     (a.type==='add_task')      addTask(dk,a.text);
+    else if(a.type==='complete_task') doneTask(dk,a.id);
+    else if(a.type==='remove_task')   removeTask(dk,a.id);
+    else if(a.type==='add_note')      addNote(dk,a.text);
+    else if(a.type==='clear_today')   ensureDay(dk).tasks=[];
+  }
+  await save();
+  renderTasks();
+}
+
+// ═══════════════════════════════════════════════════════
+//  FALLBACK REPORT BUILDERS
+// ═══════════════════════════════════════════════════════
+function buildDailyFallback(dk){
+  const day=D.days[dk];
+  if(!day||(!day.tasks.length&&!day.notes.length))return`No data for ${fdShort(dk)}.`;
+  const dn=day.tasks.filter(t=>t.status==='done'),pn=day.tasks.filter(t=>t.status==='pending');
+  const total=day.tasks.length,pct=total?Math.round(dn.length/total*100):0;
+  let r=`DAILY REPORT — ${fd(dk).toUpperCase()}\n${'─'.repeat(42)}\n\n`;
+  r+=`${dn.length}/${total} tasks completed (${pct}%)\n\n`;
+  if(dn.length){r+='✓ COMPLETED\n';dn.forEach(t=>{r+=`  • ${t.text}${t.completed_at?' ['+ft(t.completed_at)+']':''}\n`;});r+='\n';}
+  if(pn.length){r+='○ PENDING\n';pn.forEach(t=>{r+=`  • ${t.text}\n`;});r+='\n';}
+  if(day.notes.length){r+='📝 ACTIVITY LOG\n';day.notes.forEach(n=>{r+=`  [${ft(n.time)}] ${n.text}\n`;});}
+  return r.trim();
+}
+function last7(){const r={};for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().split('T')[0];if(D.days[k])r[k]=D.days[k];}return r;}
+function weekFrom(sk){const r={},s=new Date(sk+'T12:00:00');for(let i=0;i<7;i++){const d=new Date(s);d.setDate(s.getDate()+i);const k=d.toISOString().split('T')[0];if(D.days[k])r[k]=D.days[k];}return r;}
+function weekRange(sk,ek){
+  const r={},s=new Date(sk+'T12:00:00'),e=new Date(ek+'T12:00:00');
+  const cur=new Date(s);
+  while(cur<=e){const k=cur.toISOString().split('T')[0];if(D.days[k])r[k]=D.days[k];cur.setDate(cur.getDate()+1);}
+  return r;
+}
+function buildWeeklyFallback(wd){
+  const keys=Object.keys(wd);if(!keys.length)return'No data this week.';
+  let tt=0,td=0;keys.forEach(k=>{tt+=wd[k].tasks.length;td+=wd[k].tasks.filter(t=>t.status==='done').length;});
+  let r=`WEEKLY REPORT — ${fdShort(keys[0]).toUpperCase()} → ${fdShort(keys[keys.length-1]).toUpperCase()}\n${'─'.repeat(44)}\n\nOVERALL: ${td}/${tt} completed (${tt?Math.round(td/tt*100):0}%)\n\n`;
+  keys.forEach(k=>{const d=wd[k],dn=d.tasks.filter(t=>t.status==='done'),pn=d.tasks.filter(t=>t.status==='pending');r+=`${fdShort(k)}: ${dn.length} done${pn.length?', '+pn.length+' pending':''}\n`;dn.forEach(t=>{r+=`  ✓ ${t.text}\n`;});});
+  return r.trim();
+}
+
+// ═══════════════════════════════════════════════════════
+//  SEND HANDLER
+// ═══════════════════════════════════════════════════════
+let isSending=false;
+
+async function handleSend(){
+  if(isSending)return;
+  const inp=document.getElementById('chat-input'),msg=inp.value.trim();
+  if(!msg)return;
+  inp.value='';inp.style.height='auto';
+  isSending=true;
+  document.getElementById('send-btn').disabled=true;
+
+  chatMsg('user',msg);
+
+  let result;
+  if(aiMode==='artifact'||aiMode==='key'){
+    showTyping();
+    try{
+      result=await callAI(msg);
+    }catch(e){
+      hideTyping();
+      chatMsg('assistant',`AI error: ${e.message}. Falling back to offline mode.`);
+      result=parseOffline(msg);
+    }
+    hideTyping();
+  }else{
+    result=parseOffline(msg);
+  }
+
+  if(result.message)chatMsg('assistant',result.message);
+  if(result.report)chatMsg('assistant',result.report,'report');
+  await execActions(result.actions);
+
+  isSending=false;
+  document.getElementById('send-btn').disabled=false;
+}
+
+function quickCmd(cmd){
+  document.getElementById('chat-input').value=cmd;
+  handleSend();
+}
+
+// ═══════════════════════════════════════════════════════
+//  TYPING INDICATOR
+// ═══════════════════════════════════════════════════════
+function showTyping(){
+  const msgs=document.getElementById('chat-messages');
+  const el=document.createElement('div');
+  el.className='msg assistant';el.id='typing-indicator';
+  el.innerHTML='<div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;
+}
+function hideTyping(){document.getElementById('typing-indicator')?.remove();}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════
+function renderTasks(){
+  const list=document.getElementById('tasks-list');
+  const dk=todayKey(),day=D.days[dk],tasks=day?day.tasks:[];
+  document.getElementById('panel-date').textContent=fdShort(dk);
+  const dn=tasks.filter(t=>t.status==='done').length;
+  const pn=tasks.filter(t=>t.status==='pending').length;
+  const total=tasks.length,pct=total?Math.round(dn/total*100):0;
+  document.getElementById('ring-fill').style.strokeDashoffset=138.2-(138.2*pct/100);
+  document.getElementById('ring-pct').textContent=pct+'%';
+  document.getElementById('ring-stats').innerHTML=`<div><b>${dn}</b> completed</div><div><b>${pn}</b> pending</div>`;
+  if(!tasks.length){list.innerHTML='<div class="empty-state"><div>✦</div>No tasks yet today.<br>Start typing below!</div>';return;}
+  list.innerHTML=tasks.map(t=>`
+    <div class="task-item ${t.status==='done'?'done':''}" onclick="clickTask('${t.id}')">
+      <div class="task-check-outer"><span class="task-check-icon">✓</span></div>
+      <div class="task-body">
+        <div class="task-text">${esc(t.text)}</div>
+        <div class="task-meta">
+          <span class="task-time">${ft(t.added_at)}</span>
+          <span class="task-status ${t.status==='done'?'done-badge':'pending'}">${t.status==='done'?'Done':'Open'}</span>
+        </div>
+      </div>
+      <button class="task-del" onclick="clickDelete('${t.id}',event)" title="Remove">✕</button>
+      ${t.status!=='done'?'<span class="task-hint">click to complete</span>':''}
+    </div>`).join('');
+}
+
+function chatMsg(role,text,type=''){
+  const msgs=document.getElementById('chat-messages'),el=document.createElement('div');
+  el.className=`msg ${role} ${type}`.trim();
+  el.innerHTML=`<div class="msg-bubble">${esc(text).replace(/\n/g,'<br>')}</div><div class="msg-time">${new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div>`;
+  msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function updateDT(){
+  document.getElementById('dt').textContent=
+    new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+
+    '  ·  '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// ═══════════════════════════════════════════════════════
+//  CLICK TASKS
+// ═══════════════════════════════════════════════════════
+async function clickTask(id){
+  const dk=todayKey(),day=D.days[dk];if(!day)return;
+  const t=day.tasks.find(t=>t.id===id);if(!t)return;
+  if(t.status==='pending'){doneTask(dk,id);addNote(dk,`Completed: ${t.text}`);chatMsg('assistant',`✓ Done: "${t.text}"`);}
+  await save();renderTasks();
+}
+async function clickDelete(id,e){
+  e.stopPropagation();
+  const dk=todayKey(),day=D.days[dk];if(!day)return;
+  const t=day.tasks.find(t=>t.id===id);if(!t)return;
+  removeTask(dk,id);chatMsg('assistant',`Removed: "${t.text}"`);
+  await save();renderTasks();
+}
+
+// ═══════════════════════════════════════════════════════
+//  REPORTS MODAL
+// ═══════════════════════════════════════════════════════
+function openReports(){
+  document.getElementById('daily-date').value=todayKey();
+  // Set week range: Monday to Sunday of current week
+  const d=new Date();
+  const day=d.getDay();
+  const diffMon=d.getDate()-day+(day===0?-6:1);
+  const mon=new Date(d); mon.setDate(diffMon);
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  document.getElementById('week-start').value=mon.toISOString().split('T')[0];
+  document.getElementById('week-end').value=sun.toISOString().split('T')[0];
+  updateWeekLabel();
+  document.getElementById('report-output').textContent='Select a date and click Generate.';
+  document.getElementById('reports-modal').classList.remove('hidden');
+}
+
+function updateWeekLabel(){
+  const ws=document.getElementById('week-start').value;
+  const we=document.getElementById('week-end').value;
+  const lbl=document.getElementById('week-label');
+  if(!ws||!we){lbl.textContent='';return;}
+  const s=new Date(ws+'T12:00:00'), e=new Date(we+'T12:00:00');
+  if(e<s){lbl.textContent='⚠ End date must be after start date';lbl.style.color='var(--coral)';return;}
+  const days=Math.round((e-s)/(1000*60*60*24))+1;
+  lbl.style.color='var(--text-mid)';
+  lbl.textContent=`Covering ${days} day${days!==1?'s':''}: ${s.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})} – ${e.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}`;
+}
+function closeReports(){document.getElementById('reports-modal').classList.add('hidden');}
+function switchTab(tab){
+  document.getElementById('tab-daily').classList.toggle('active',tab==='daily');
+  document.getElementById('tab-weekly').classList.toggle('active',tab==='weekly');
+  document.getElementById('daily-controls').classList.toggle('hidden',tab!=='daily');
+  document.getElementById('weekly-controls').classList.toggle('hidden',tab!=='weekly');
+  document.getElementById('report-output').textContent='Select parameters and click Generate.';
+}
+async function genReport(type){
+  const out=document.getElementById('report-output');
+  out.textContent='Generating…';
+  if(type==='daily'){
+    const dk=document.getElementById('daily-date').value;if(!dk)return;
+    if(aiMode==='artifact'||aiMode==='key'){
+      try{
+        const day=D.days[dk]||{tasks:[],notes:[]};
+        const taskList=day.tasks.map(t=>`[${t.status.toUpperCase()}] ${t.text}${t.completed_at?' (done '+ft(t.completed_at)+')':' (added '+ft(t.added_at)+')'}`).join('\n')||'(none)';
+        const noteList=day.notes.map(n=>`[${ft(n.time)}] ${n.text}`).join('\n')||'(none)';
+        const prompt=`Generate a professional daily activity report for ${fd(dk)}.\n\nTASKS:\n${taskList}\n\nACTIVITY LOG:\n${noteList}\n\nWrite the report in the same language as the task descriptions. Format it with sections (Quick Wins, Medium-Term, Pending, Focus of the day). Be concise and professional. Plain text only, no markdown symbols.`;
+        const headers={'Content-Type':'application/json'};
+        if(aiMode==='key'){headers['x-api-key']=getStoredKey();headers['anthropic-version']='2023-06-01';headers['anthropic-dangerous-direct-browser-access']='true';}
+        const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers,body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
+        const data=await r.json();
+        out.textContent=data.content.map(b=>b.text||'').join('');
+      }catch(e){out.textContent=buildDailyFallback(dk);}
+    }else{out.textContent=buildDailyFallback(dk);}
+  }else{
+    const ws=document.getElementById('week-start').value;
+    const we=document.getElementById('week-end').value;
+    if(!ws||!we)return;
+    const wd=weekRange(ws,we);
+    if(aiMode==='artifact'||aiMode==='key'){
+      try{
+        const keys=Object.keys(wd);
+        if(!keys.length){out.textContent='No data for this week.';return;}
+        const summary=keys.map(k=>{const d=wd[k];return `${fdShort(k)}: ${d.tasks.filter(t=>t.status==='done').length} done, ${d.tasks.filter(t=>t.status==='pending').length} pending\nTasks: ${d.tasks.map(t=>'['+t.status.toUpperCase()+'] '+t.text).join(' | ')||'none'}`;}).join('\n\n');
+        const prompt=`Generate a weekly productivity summary report.\n\n${summary}\n\nWrite in the language of the task descriptions. Include totals, day highlights, and a brief synthesis at the end. Plain text only.`;
+        const headers={'Content-Type':'application/json'};
+        if(aiMode==='key'){headers['x-api-key']=getStoredKey();headers['anthropic-version']='2023-06-01';headers['anthropic-dangerous-direct-browser-access']='true';}
+        const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers,body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})});
+        const data=await r.json();
+        out.textContent=data.content.map(b=>b.text||'').join('');
+      }catch{out.textContent=buildWeeklyFallback(wd);}
+    }else{out.textContent=buildWeeklyFallback(wd);}
+  }
+}
+function copyReport(){navigator.clipboard.writeText(document.getElementById('report-output').textContent).catch(()=>{});}
+
+// ═══════════════════════════════════════════════════════
+//  API KEY MODAL
+// ═══════════════════════════════════════════════════════
+function openApiKeyModal(){
+  const stored=getStoredKey();
+  if(stored)document.getElementById('apikey-input').value=stored;
+  document.getElementById('apikey-modal').classList.remove('hidden');
+}
+function closeApiKeyModal(){document.getElementById('apikey-modal').classList.add('hidden');}
+async function saveApiKey(){
+  const k=document.getElementById('apikey-input').value.trim();
+  if(!k)return;
+  const btn=document.querySelector('.btn-save-key');
+  btn.textContent='Testing…';btn.disabled=true;
+  const ok=await testKey(k);
+  if(ok){
+    storeKey(k);aiMode='key';updateAiBadge();
+    closeApiKeyModal();
+    chatMsg('assistant','✓ AI is now active. You can talk to me naturally — dump your tasks, tell me what you finished, or ask for a report anytime.');
+  }else{
+    btn.textContent='Invalid key — retry';btn.disabled=false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+async function init(){
+  await load();
+  renderTasks();
+  updateDT();
+  setInterval(updateDT,1000);
+
+  const inp=document.getElementById('chat-input');
+  inp.addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';});
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend();}});
+
+  // Detect AI mode silently
+  await detectAiMode();
+
+  // Greeting
+  const day=D.days[todayKey()];
+  const modeNote=aiMode==='offline'?' (AI offline — tap ⚙ AI Setup to enable)':'';
+  if(day&&day.tasks.length){
+    const pend=day.tasks.filter(t=>t.status==='pending'),dn=day.tasks.filter(t=>t.status==='done').length;
+    if(pend.length)chatMsg('assistant',`${pend.length} task${pend.length>1?'s':''} still pending: ${pend.map(t=>t.text).join(' · ')}.${dn?' '+dn+' done so far.':''}${modeNote}`);
+    else chatMsg('assistant',`All ${dn} tasks cleared today.${modeNote}`);
+  }else{
+    if(aiMode==='offline'){
+      chatMsg('assistant',"AI is offline. Set up your API key via ⚙ AI Setup to unlock intelligent task understanding, natural language input, and smart reports.");
+    }else{
+      chatMsg('assistant',"Good to go. Tell me what you're working on today — you can dump your whole task list at once, write in any language, and I'll organize it for you.");
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>
